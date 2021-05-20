@@ -1,0 +1,92 @@
+import pygame
+from pygame.locals import *
+
+
+from OpenGL.GL import *
+from OpenGL.GLU import *
+#init pygame
+
+pygame.init()
+display=(800,600)
+screen = pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
+pygame.key.set_repeat(50,50)
+pygame.display.set_caption('Project')
+
+#no idea what i'm doing here
+# glMatrixMode(GL_PROJECTION)
+gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
+
+# glMatrixMode(GL_MODELVIEW)
+# gluLookAt(0, -8, 0, 0, 0, 0, 0, 0, 1)
+# viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+# glLoadIdentity()
+
+
+# init mouse movement or something?
+mouseMove = [0, 0]
+up_down_angle = 0.0
+
+coords=(
+    (-1.0,-0.5,-20),
+    (10,-0.5,-20),
+    (10,-0.5,-40),
+    (-1.0,-0.5,-40)
+    )
+def mesh():
+    glBegin(GL_QUADS)
+    for coord in coords:
+        glColor3fv((0,1,0))
+        glVertex3fv(coord)
+    glEnd()
+def main():
+    displayCenter = [screen.get_size()[i] // 2 for i in range(2)]
+    # pygame.mouse.set_pos(displayCenter)
+    running=True
+    cam_pos=[0.0,0.0,-5]
+    up_down_angle = 0.0
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        #         running=False
+        #     if event.type == pygame.MOUSEMOTION:
+        #         mouseMove = [event.pos[i] - displayCenter[i] for i in range(2)]
+        # pygame.mouse.set_pos(displayCenter)
+        keys = pygame.key.get_pressed()
+        
+
+        #no idea what i'm doing here
+        # global viewMatrix
+        # glLoadIdentity()
+        # up_down_angle += mouseMove[1]*0.1
+        # glRotatef(up_down_angle, 1.0, 0.0, 0.0)
+        # glPushMatrix()
+        # glLoadIdentity()
+        if keys[pygame.K_w]:
+            glTranslatef(0.0,0.0,0.4)
+            cam_pos[2]+=0.4
+        if keys[pygame.K_s]:
+            glTranslatef(0.0,0.0,-0.4)
+            cam_pos[2]-=0.4
+        if keys[pygame.K_a]:
+            glTranslatef(0.4,0.0,0.0)
+            cam_pos[0]+=0.4
+        if keys[pygame.K_d]:
+            glTranslatef(-0.4,0.0,0.0)
+            cam_pos[0]-=0.4
+        # glRotatef(mouseMove[0]*0.1, 0.0, 1.0, 0.0)
+        # glMultMatrixf(viewMatrix)
+        # viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        # glPopMatrix()
+        # glMultMatrixf(viewMatrix)
+        moos=pygame.mouse.get_rel()
+        glRotatef(moos[0], cam_pos[0], cam_pos[1], cam_pos[2])
+        #clear ze window
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        # glPushMatrix()
+        mesh()
+        # glPopMatrix()
+        pygame.display.flip()
+        pygame.time.wait(10)
+main()

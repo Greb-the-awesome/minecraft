@@ -1,0 +1,164 @@
+import pygame
+from pygame.locals import *
+
+from OpenGL.GL import *
+from OpenGL.GLU import *
+
+import math
+from perlin_noise import PerlinNoise
+import copy
+import random
+
+pygame.init()
+display = (800, 600)
+scree = pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
+
+glEnable(GL_DEPTH_TEST)
+glEnable(GL_LIGHTING)
+glShadeModel(GL_SMOOTH)
+glEnable(GL_COLOR_MATERIAL)
+glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+
+glEnable(GL_LIGHT0)
+glLightfv(GL_LIGHT0, GL_AMBIENT, [0.5, 0.5, 0.5, 1])
+glLightfv(GL_LIGHT0, GL_DIFFUSE, [1.0, 1.0, 1.0, 1]) 
+
+glMatrixMode(GL_PROJECTION)
+gluPerspective(60, (display[0]/display[1]), 0.1, 100.0)
+
+glMatrixMode(GL_MODELVIEW)
+gluLookAt(0, -8, 0, 0, 0, 0, 0, 0, 1)
+viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+glLoadIdentity()
+
+
+# init mouse movement and center mouse on screen
+displayCenter = [scree.get_size()[i] // 2 for i in range(2)]
+mouseMove = [0, 0]
+pygame.mouse.set_pos(displayCenter)
+
+coords_h=[
+    [-1,-1,-2],
+    [1,-1,-2],
+    [1,1,-2],
+    [-1,1,-2]
+    ]
+coords_v=[
+    [-10,-2,-10],
+    [10,-2,-10],
+    [10,-2,10],
+    [-10,-2,10]
+    ]
+coords_2=[
+    [0,-10,-10],
+    [0,10,-10],
+    [0,10,10],
+    [0,-10,10]
+    ]
+    
+#this is not good programming practice, please don't be like me if you see this.
+def mesh(angle='h', z=None, x=None, y=None, color=(0,1,0)):
+    if angle=='h':
+        coords=copy.deepcopy(coords_h)
+        for i in range(0,4):
+            coords[i][2]+=z
+            coords[i][1]+=y
+            coords[i][0]+=x
+        glColor3f(color[0],color[1], color[2])
+    elif angle=='v':
+        coords=coords_v
+        glColor3f(1,0,0)
+    elif angle==1:
+        coords=coords_2
+        glColor3f(0,0,1)
+    #elif angle==''
+    glBegin(GL_QUADS)
+    for coord in coords:
+        glVertex3f(coord[0],coord[1],coord[2])
+    glEnd()
+cam_pos=[0,0,0]
+up_down_angle = 0.0
+paused = False
+run = True
+WORLD_SEED=3
+noise=PerlinNoise(octaves=10, seed=WORLD_SEED)
+glScalef(0.1,0.1,0.1)
+
+while run:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN:
+                run = False
+            if event.key == pygame.K_PAUSE or event.key == pygame.K_p:
+                paused = not paused
+                pygame.mouse.set_pos(displayCenter)
+        if not paused:
+            if event.type == pygame.MOUSEMOTION:
+                mouseMove = [event.pos[i] - displayCenter[i] for i in range(2)]
+            pygame.mouse.set_pos(displayCenter)
+
+    if not paused:
+        # get keys
+        keypress = pygame.key.get_pressed()
+
+        #mouseMove = pygame.mouse.get_rel()
+    
+        # init model view matrix
+        glLoadIdentity()
+
+        # apply the look up and down
+        up_down_angle += mouseMove[1]*0.1
+        glRotatef(up_down_angle, 1.0, 0.0, 0.0)
+
+        # init the view matrix
+        glPushMatrix()
+        glLoadIdentity()
+
+        # apply the movment 
+        if keypress[pygame.K_w]:
+            glTranslatef(0,0,0.1)
+            cam_pos[2]+=0.1
+        if keypress[pygame.K_s]:
+            glTranslatef(0,0,-0.1)
+            cam_pos[2]-=0.1
+        if keypress[pygame.K_d]:
+            glTranslatef(-0.1,0,0)
+            cam_pos[0]-=0.1
+        if keypress[pygame.K_a]:
+            glTranslatef(0.1,0,0)
+            cam_pos[0]+=0.1
+        if keypress[pygame.K_SPACE]:
+            glTranslatef(0,-0.2,0)
+            cam_pos[1]-=0.2
+        if cam_pos[1]<0:
+            glTranslatef(0,0.1,0)
+            cam_pos[1]+=0.1
+        # apply the left and right rotation
+        glRotatef(mouseMove[0]*0.1, 0.0, 1.0, 0.0)
+
+        # multiply the current matrix by the get the new view matrix and store the final vie matrix 
+        glMultMatrixf(viewMatrix)
+        viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+
+        # apply view matrix
+        glPopMatrix()
+        glMultMatrixf(viewMatrix)
+
+        glLightfv(GL_LIGHT0, GL_POSITION, [1, -1, 1, 0])
+
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+
+        # ---------------------actual code here---------------------
+        for horizontals in range(0,8):
+            for verticals in range(0,8):
+                mesh(angle='h', x=horizontals, y=verticals, z=noise([horizontals+0.634,verticals]), color=(
+                    horizontals*0.1, verticals*0.1,0))
+        #I'm really really sorry CPU
+        #---------------------end of code---------------------
+
+        pygame.display.flip()
+        pygame.time.wait(10)
+
+pygame.quit()

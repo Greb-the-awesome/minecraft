@@ -1,0 +1,28 @@
+voiceover
+
+1.
+
+ok so recently, I told my mom that I would code my own copy of minecraft in OpenGL one day because she wouldn't buy it for me. At that time I was thinking maybe when I had time or something I would study C++ or something and use it to code OpenGL minecraft or whatever in the next 4 years, but recently I discovered pyOpenGL. pyOpenGL is OpenGL bindings in python, which in layman's terms basically means you can use python to call OpenGL functions. so I guess I'm going to be coding in the language of the future. *shows the discord message* Anyway, I did pip install pyopengl pyopengl accelerate and it said installation sucessful. So I copied and pasted some code from a tutorial, but for some reason I got an error, which was probably because I didn't run setup.py or because I was missing a dll or whatever. Anyway after a bunch of troubleshooting and downloading wheel files, I finally got it to work, and made a rotating cube.
+*shows rotating cube*
+then after a bit of tweaking that didn't work and trying to figure out opengl coordinates, which was really quite complicated, I had a surface.
+*shows bright green surface*
+the next thing to do was to implement player controls. Fourtanetley pygame, a python game library, works with pyOpenGL so pygame handles all the low level stuff like opening a window and getting keyboard input and the other stuff I don't want to do. Then after some time I could move around using WASD.
+*shows moving around*
+getting the player's view to follow the mouse was a bit more complicated.
+2.
+
+after some "learning opportunities", I found this really good stack overflow thread, and after many long hours (well actually it was like 30 minutes) I finally got the mouse movement thing to work by copying and pasting like 50 lines of code from the stack overflow thread.
+*shows the mouse movement*
+after that, I wanted to understand the code so I spent another good few hours with my genius mom trying to understand linear algebra and failing.
+and I also played with GL_QUADS.
+ok now lets stop playing around with OpenGL and start with terrain generation. and since my code was getting clogged up with random crap that I had copied and pasted from online tutorials, I started over, and pledged to not copy and paste from online tutorials before understanding the code.
+aaaaand because of the lack of good documentation and my stupidity I ended up copying and pasting without understanding the code anyway.
+so now that I had copied and pasted and got the camera movement right, it was time to start terrain generation.
+many people would think that in a world like minecraft, you would use cubes for the blocks, which are represented here as squares. but if you think about it, these faces are inside and don't get seen by the player, but get rendered anyway. so using cubes for blocks adds a lot of extra useless rendering and makes the performance pretty bad. so instead of using cubes, we'll use surfaces. this way we can make a shell of the world to only show the things that the player sees.
+this means that we will need a way to change a surface's position, just by changing a value.
+which wasn't too hard to implement. *shows the surface* looks just like before, doesn't it? oh and also I added flying.
+so my idea was that every block would check if there was a block next to it, and if there was then the face wouldn't draw.
+and this is actually pretty simple to do.
+and you will NOT belive what happened next. It worked on the first try! *shows the blocks*. and I also slapped on a texture.
+so to actually generate terrain, I'm going to use something called Perlin Noise. basically its a random number generator, but it produces random numbers with smooth transitions between them. here we can see a picture of it. notice that the dark and light spots have smooth transitions.
+and also, I'm going to use

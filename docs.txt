@@ -1,0 +1,16 @@
+FUNCTIONS:
+	loadTexture() => texture id
+	don't play with this one, just leave it as is. generates textures for GL_QUADS.
+
+	mesh(angle='h', x=None, y=None, z=None, color=(0,1,0), what="GRASS", side="top") => None
+	generates a GL_QUADS.
+
+	block(x,y,z,what) => None
+	adds a tuple (x,y,z) to the `blocks` dictionary.
+
+	genMeshPoints(blk) => None
+	this function creates a list of the block faces to be drawn, then calls actuallyCreateBlocks. the `blk` argument is for the `blocks` dictionary. after
+
+VARS:
+	carrier.blockPoints is a list with lists inside. the lists inside are chunk block coords
+	carrier.chunks is a list of chunk objects
