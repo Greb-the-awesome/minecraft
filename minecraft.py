@@ -313,7 +313,7 @@ def main():
             cam_pos[0] += to_translate[0]
             cam_pos[1] = 0
             cam_pos[2] += to_translate[1]
-            print(f"cam_pos = {cam_pos}, player_angle_x = {player_angle_x}, player_angle_y = {player_angle_y}")
+            # print(f"cam_pos = {cam_pos}, player_angle_x = {player_angle_x}, player_angle_y = {player_angle_y}")
 
 
             if keys[pygame.K_w]:
@@ -349,7 +349,12 @@ def main():
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-            mesh('h', *cam_pos)
+            carrier.angle += 2
+            glPushMatrix()
+            glTranslatef(3, 2, 1)
+            glRotatef(carrier.angle, 0, 1, 0)
+            mesh('h', 0, 0, 0)
+            glPopMatrix()
 
             # (0,0,0) point
             glColor3f(1.0,0.0,0.0)
