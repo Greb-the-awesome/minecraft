@@ -19,12 +19,7 @@ pygame.init()
 screen = pygame.display.set_mode((800,600), DOUBLEBUF | OPENGL)
 
 # -------------- don't touch --------------
-glMatrixMode(GL_PROJECTION)
 gluPerspective(50, (800/600), 0.1, 100.0)
-glMatrixMode(GL_MODELVIEW)
-gluLookAt(0,0,0, 0,0,-1, 0,1,0)
-carrier.viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
-glLoadIdentity()
 #------------------------------------------
 
 glTranslatef(0,0,-10)
@@ -224,8 +219,7 @@ def main():
     # angles and mouse movement
     left_right_angle=0
     up_down_angle=0
-    glTranslatef(0,10,0)
-    cam_pos=[0,3,0]
+    cam_pos=[0,0,-10]
     mouse_move=[0,0]
     player_angle_x=0
     player_angle_y=0
@@ -235,11 +229,10 @@ def main():
     # make a sphere
     originpoint=gluNewQuadric()
 
-    # no idea, don't touch
-    glMatrixMode(GL_MODELVIEW)
-
     # prevent weird stuff
     glEnable(GL_DEPTH_TEST)
+
+    glMatrixMode(GL_MODELVIEW)
 
 
     # -------------- game loop --------------
@@ -264,92 +257,47 @@ def main():
             pygame.mouse.set_pos(displayCenter)
             keys=pygame.key.get_pressed()
 
-
-            # -------------- don't touch --------------
-            glLoadIdentity()
-            # -----------------------------------------
-
             left_right_angle+=mouse_move[0]
             up_down_angle+=mouse_move[1]
             player_angle_x-=mouse_move[0]*0.01
             player_angle_y-=mouse_move[1]*0.01
 
             # player quadrats
-            if player_angle_x < 90 and player_angle_x >= 0:
-                carrier.playerQuadrat=1
-            elif player_angle_x > 90 and player_angle_x >= 180:
-                carrier.playerQuadrat=2
-            elif player_angle_x > 180 and player_angle_x >= 270:
-                carrier.playerQuadrat=3
-            elif player_angle_x > 270 and player_angle_x > 360:
-                carrier.playerQuadrat=4
-            else: carrier.playerQuadrat=1
 
-            # -------------- don't touch --------------
-            glRotatef(up_down_angle*0.1, 0.1, 0.0, 0.0)
             glPushMatrix()
-            x = glGetDoublev(GL_MODELVIEW_MATRIX)
             glLoadIdentity()
-            # -----------------------------------------
-
-            # trigonometry
-            if carrier.playerQuadrat == 1:
-                relative_player_angle=player_angle_x
-                to_translate[0] = -(math.sin(math.radians(relative_player_angle)) * 0.1)
-                to_translate[1] = -(math.cos(math.radians(relative_player_angle)) * 0.1)
-            elif carrier.playerQuadrat == 2:
-                relative_player_angle=player_angle_x-90
-                to_translate[0] = -(math.sin(math.radians(relative_player_angle)) * 0.1)
-                to_translate[1] = math.cos(math.radians(relative_player_angle)) * 0.1
-            elif carrier.playerQuadrat == 3:
-                relative_player_angle=player_angle_x-180
-                to_translate[0] = math.sin(math.radians(relative_player_angle)) * 0.1
-                to_translate[1] = -(math.cos(math.radians(relative_player_angle)) * 0.1)
-            elif carrier.playerQuadrat == 4:
-                relative_player_angle=player_angle_x-270
-                to_translate[0] = math.cos(math.radians(relative_player_angle)) * 0.1
-                to_translate[1] = math.sin(math.radians(relative_player_angle)) * 0.1
-
-            cam_pos[0] += to_translate[0]
-            cam_pos[1] = 0
-            cam_pos[2] += to_translate[1]
-            print(f"cam_pos = {cam_pos}, player_angle_x = {player_angle_x}, player_angle_y = {player_angle_y}")
-
+            glRotatef(left_right_angle * 0.1, 0, 1, 0)
 
             if keys[pygame.K_w]:
                 glTranslatef(0,0,0.1)
+                cam_pos[2] += 0.1
             if keys[pygame.K_s]:
                 glTranslatef(0,0,-0.1)
+                cam_pos[2] -= 0.1
             if keys[pygame.K_a]:
                 glTranslatef(0.1,0,0)
+                cam_pos[0] += 0.1
             if keys[pygame.K_d]:
                 glTranslatef(-0.1,0,0)
+                cam_pos[0] -= 0.1
             if keys[pygame.K_SPACE]:
                 glTranslatef(0,-0.1,0)
+                cam_pos[1] -= 0.1
             if keys[pygame.K_LSHIFT]:
                 glTranslatef(0,0.1,0)
+                cam_pos[1] += 0.1
 
-            # -------------- don't touch --------------
-            glRotatef(mouse_move[0]*0.1, 0.0, 1.0, 0.0)
-            glMultMatrixf(carrier.viewMatrix)
-            carrier.viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+            glRotatef(up_down_angle * 0.1, 1, 0, 0)
+            carrier.thing = glGetFloatv(GL_MODELVIEW_MATRIX)
+            # for i in carrier.thing:
+            #     print("\n")
+            #     for a in i:
+            #         print(a)
+            # print("==========================")
             glPopMatrix()
-            glMultMatrixf(carrier.viewMatrix)
-            
-            # -----------------------------------------
-            #cam_pos = [x[3][0], x[3][1], x[3][2]]
-            # if carrier.angle == 50:
-            #     carrier.angle = 0
-            #     for a in x:
-            #         for b in a:
-            #             print(b, end = ", ")
-            #         print("\n")
-            #     print("===========================")
-            # else: carrier.angle += 1
+            glMultMatrixf(carrier.thing)
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-            mesh('h', *cam_pos)
 
             # (0,0,0) point
             glColor3f(1.0,0.0,0.0)
@@ -359,6 +307,13 @@ def main():
             for blockPoint in carrier.blockPoints:
                 for point in blockPoint:
                     mesh(point[0],point[1],point[2],point[3], (1,1,1),point[4], point[5])
+
+            glPushMatrix()
+            carrier.angle += 1
+            glTranslatef(3, 2, 1)
+            glRotatef(carrier.angle, 0, 1, 0)
+            mesh('h', 0, 0, 0)
+            glPopMatrix()
             
             pygame.display.flip()
             pygame.time.wait(10)
