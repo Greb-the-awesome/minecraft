@@ -14,6 +14,28 @@ class CarrierClass:
     pass
 carrier=CarrierClass()
 
+class Entity:
+    def __init__(self, friction, inertia, pos):
+        self.speed = [0, 0]
+        self.friction = friction
+        self.inertia = inertia
+        self.pos = pos
+    def frame():
+        self.pos[0] += self.speed[0]
+        self.pos[1] += self.speed[1]
+    def push(force, x, y):
+        self.speed[0] += x / self.inertia
+        self.speed[1] += y / self.inertia
+
+class Player(Entity):
+    def __init__(self):
+        Entity.__init__(self, 0, 2, [0, 0, 0])
+        self.effects = None
+        self.angleX = 0
+        self.angleY = 0
+
+player = Player()
+
 # initialising pygame
 pygame.init()
 screen = pygame.display.set_mode((800,600), DOUBLEBUF | OPENGL)
@@ -84,6 +106,21 @@ def loadTexture():
 
     return texid
 
+def getTexCoords(what, face):
+    if BLOCKS[what]["special"]:
+        if what == "GRASS":
+            if face == "top":
+                carrier.tex_coords = BLOCKS["GRASS"]["texture-coords-top"]
+            elif face == "left" or face == "right" or face == "front" or face == "back":
+                carrier.tex_coords = BLOCKS["GRASS"]["texture-coords-sides"]
+            elif face == "bottom":
+                carrier.tex_coords = BLOCKS["GRASS"]["texture-coords-bottom"]
+    elif what == "DIRT":
+        carrier.tex_coords = BLOCKS["DIRT"]["texture-coords"]
+    if what == "TALLGRASS":
+        carrier.tex_coords = BLOCKS["TALLGRASS"]["texture-coords"]
+    return carrier.tex_coords
+
 #this is not good programming practice, please don't be like me if you see this.
 def mesh(angle='h', x=None, y=None, z=None, color=(0,1,0), what="GRASS", face="top"):
     """a function for generating GL_QUADS.
@@ -124,21 +161,12 @@ def mesh(angle='h', x=None, y=None, z=None, color=(0,1,0), what="GRASS", face="t
         #     coords[i][0]+=x
         glColor3f(color[0],color[1], color[2])
     # textures
-    if BLOCKS[what]["special"]:
-        if what == "GRASS":
-            if face == "top":
-                carrier.tex_coords = BLOCKS["GRASS"]["texture-coords-top"]
-            elif face == "left" or face == "right" or face == "front" or face == "back":
-                carrier.tex_coords = BLOCKS["GRASS"]["texture-coords-sides"]
-            elif face == "bottom":
-                carrier.tex_coords = BLOCKS["GRASS"]["texture-coords-bottom"]
-    elif what == "DIRT":
-        carrier.tex_coords = BLOCKS["DIRT"]["texture-coords"]
+    tex_coords = getTexCoords(what, face)
     # beginning generation
     tex_coord_counter=0
     glBegin(GL_QUADS)
     for coord in coords:
-        glTexCoord2f(carrier.tex_coords[tex_coord_counter][0], carrier.tex_coords[tex_coord_counter][1])
+        glTexCoord2f(tex_coords[tex_coord_counter][0], tex_coords[tex_coord_counter][1])
         tex_coord_counter+=1
         glVertex3f(coord[0],coord[1],coord[2])
     glEnd()
@@ -222,13 +250,10 @@ def main():
     pygame.mouse.set_pos(displayCenter)
 
     # angles and mouse movement
-    left_right_angle=0
-    up_down_angle=0
+    m_left_right_angle=0
+    m_up_down_angle=0
     glTranslatef(0,10,0)
-    cam_pos=[0,3,0]
     mouse_move=[0,0]
-    player_angle_x=0
-    player_angle_y=0
     to_translate=[0.1,0]
     carrier.angle = 1
 
@@ -269,65 +294,69 @@ def main():
             glLoadIdentity()
             # -----------------------------------------
 
-            left_right_angle+=mouse_move[0]
-            up_down_angle+=mouse_move[1]
-            player_angle_x-=mouse_move[0]*0.01
-            player_angle_y-=mouse_move[1]*0.01
+            m_left_right_angle+=mouse_move[0]
+            m_up_down_angle+=mouse_move[1]
+            player.angleX-=mouse_move[0] * 0.1
+            player.angleY-=mouse_move[1] * 0.1
 
             # player quadrats
-            if player_angle_x < 90 and player_angle_x >= 0:
-                carrier.playerQuadrat=1
-            elif player_angle_x > 90 and player_angle_x >= 180:
-                carrier.playerQuadrat=2
-            elif player_angle_x > 180 and player_angle_x >= 270:
-                carrier.playerQuadrat=3
-            elif player_angle_x > 270 and player_angle_x > 360:
-                carrier.playerQuadrat=4
-            else: carrier.playerQuadrat=1
+            if player.angleX < 90 and player.angleX >= 0:
+                carrier.playerQuadrat = 1
+            elif player.angleX > 90 and player.angleX <= 180:
+                carrier.playerQuadrat = 2
+            elif player.angleX > -180 and player.angleX <= -90:
+                carrier.playerQuadrat = 3
+            elif player.angleX > -90 and player.angleX < 0:
+                carrier.playerQuadrat = 4
+            else: carrier.playerQuadrat = 1
 
             # -------------- don't touch --------------
-            glRotatef(up_down_angle*0.1, 0.1, 0.0, 0.0)
+            glRotatef(m_up_down_angle*0.1, 0.1, 0.0, 0.0)
             glPushMatrix()
-            x = glGetDoublev(GL_MODELVIEW_MATRIX)
             glLoadIdentity()
             # -----------------------------------------
 
-            # trigonometry
+            # trigonometry (quadrats go clockwise)
             if carrier.playerQuadrat == 1:
-                relative_player_angle=player_angle_x
+                relative_player_angle=player.angleX
                 to_translate[0] = -(math.sin(math.radians(relative_player_angle)) * 0.1)
-                to_translate[1] = -(math.cos(math.radians(relative_player_angle)) * 0.1)
+                to_translate[1] = (math.cos(math.radians(relative_player_angle)) * 0.1)
             elif carrier.playerQuadrat == 2:
-                relative_player_angle=player_angle_x-90
+                relative_player_angle=player.angleX-90
                 to_translate[0] = -(math.sin(math.radians(relative_player_angle)) * 0.1)
-                to_translate[1] = math.cos(math.radians(relative_player_angle)) * 0.1
+                to_translate[1] = -math.cos(math.radians(relative_player_angle)) * 0.1
             elif carrier.playerQuadrat == 3:
-                relative_player_angle=player_angle_x-180
+                relative_player_angle=player.angleX-180
                 to_translate[0] = math.sin(math.radians(relative_player_angle)) * 0.1
                 to_translate[1] = -(math.cos(math.radians(relative_player_angle)) * 0.1)
             elif carrier.playerQuadrat == 4:
-                relative_player_angle=player_angle_x-270
+                relative_player_angle=player.angleX-270
                 to_translate[0] = math.cos(math.radians(relative_player_angle)) * 0.1
                 to_translate[1] = math.sin(math.radians(relative_player_angle)) * 0.1
-
-            cam_pos[0] += to_translate[0]
-            cam_pos[1] = 0
-            cam_pos[2] += to_translate[1]
-            # print(f"cam_pos = {cam_pos}, player_angle_x = {player_angle_x}, player_angle_y = {player_angle_y}")
 
 
             if keys[pygame.K_w]:
                 glTranslatef(0,0,0.1)
+                player.pos[0] += to_translate[0]
+                player.pos[2] -= to_translate[1]
             if keys[pygame.K_s]:
                 glTranslatef(0,0,-0.1)
+                player.pos[0] -= to_translate[0]
+                player.pos[2] += to_translate[1]
             if keys[pygame.K_a]:
                 glTranslatef(0.1,0,0)
+                player.pos[0] -= to_translate[1]
+                player.pos[2] -= to_translate[0]
             if keys[pygame.K_d]:
                 glTranslatef(-0.1,0,0)
+                player.pos[0] += to_translate[1]
+                player.pos[2] += to_translate[0]
             if keys[pygame.K_SPACE]:
                 glTranslatef(0,-0.1,0)
+                player.pos[1] += 0.1
             if keys[pygame.K_LSHIFT]:
                 glTranslatef(0,0.1,0)
+                player.pos[1] -= 0.1
 
             # -------------- don't touch --------------
             glRotatef(mouse_move[0]*0.1, 0.0, 1.0, 0.0)
@@ -337,24 +366,18 @@ def main():
             glMultMatrixf(carrier.viewMatrix)
             
             # -----------------------------------------
-            #cam_pos = [x[3][0], x[3][1], x[3][2]]
-            # if carrier.angle == 50:
-            #     carrier.angle = 0
-            #     for a in x:
-            #         for b in a:
-            #             print(b, end = ", ")
-            #         print("\n")
-            #     print("===========================")
-            # else: carrier.angle += 1
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             carrier.angle += 2
             glPushMatrix()
             glTranslatef(3, 2, 1)
-            glRotatef(carrier.angle, 0, 1, 0)
-            mesh('h', 0, 0, 0)
+            glRotatef(player.angleX, 0, 1, 0)
+            glRotatef(player.angleY, 1, 0, 0)
+            mesh('v', 0, 0, 0, (0, 1, 0), "TALLGRASS")
             glPopMatrix()
+
+            mesh('h', player.pos[0], player.pos[1] - 1, player.pos[2])
 
             # (0,0,0) point
             glColor3f(1.0,0.0,0.0)

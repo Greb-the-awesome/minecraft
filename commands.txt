@@ -1,0 +1,8 @@
+delete branch:
+git branch -d branch-name
+
+push to delete branch:
+git push origin --delete branch-name
+
+go to branch:
+git checkout branch-name
