@@ -25,4 +25,6 @@ so my idea was that every block would check if there was a block next to it, and
 and this is actually pretty simple to do.
 and you will NOT belive what happened next. It worked on the first try! *shows the blocks*. and I also slapped on a texture.
 so to actually generate terrain, I'm going to use something called Perlin Noise. basically its a random number generator, but it produces random numbers with smooth transitions between them. here we can see a picture of it. notice that the dark and light spots have smooth transitions.
-and also, I'm going to use
+and also, I'm going to use the minecraft system of chunking. basically blocks are divided into chunks, and chunks are loaded in and out as the player goes near and far from them.
+and I won't show the chunks, because I was using old OpenGL which is really slow, and it became really laggy when it was presented with any sort of real load.
+Ok, so let's talk about why I was using old OpenGL. so first, modern OpenGL is complicated and stuff, and so I just wanted to use old OpenGL. also, all the tutorials used the old versions.
